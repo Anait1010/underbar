@@ -108,15 +108,15 @@
 
   // Produce a duplicate-free version of the array.
   _.uniq = function(array, isSorted, iterator) {
-    var newArray = [];
-    var mySet = new Set();
-    for(var i = 0; i < array.length; i ++){
-    mySet.add(array[i]);
-  }
-    mySet.forEach(function(value){
-    newArray.push(value);
-  });
-  return newArray;
+     var uniques = [];
+
+    _.each(array, item => {
+      if ( _.indexOf(uniques, item) === -1 ) {
+        uniques.push(item);
+      }
+    });
+
+    return uniques;
   };
 
 
@@ -171,7 +171,7 @@
   //   }); // should be 5, regardless of the iterator function passed in
   //          No accumulator is given so the first element is used.
   _.reduce = function(collection, iterator, accumulator) {
-      var first = true;
+    var first = true;
   _.each(collection, function(item) {   
     if (first && accumulator === undefined) {
       accumulator = item;
@@ -199,12 +199,41 @@
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
+     if(iterator === undefined){
+      return collection[collection.length-1];
+    }
+     return _.reduce(collection , function(acc, item){
+      if (!acc) {
+        return false;
+      }
+      if(iterator(item)) {
+        return true;
+      }
+      return false;
+    }, true);
   };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
+      if(iterator === undefined){
+        return _.contains(collection, true);
+      }
+      if( _.every(collection, iterator)){
+        return true;
+      }
+      return _.reduce(collection, function(acc, item){
+      if (acc) {
+        return true;
+      }
+      if(iterator(item)) {
+        return true;
+      }
+      if(!iterator(item)){
+        return false;
+      }
+    }, false);
   };
 
 
@@ -227,11 +256,30 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+       if(JSON.stringify(arguments[1]) === JSON.stringify({})) {
+      return obj;
+    }
+    for(var i = 1; i < arguments.length; i++){
+      for(var prop in arguments[i]) {
+        obj[prop] = arguments[i][prop];
+      }
+    }
+    return obj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+   var objects = _.map(arguments, item => item).slice(1);
+
+    _.each(objects, item => {
+      _.each(item, (value, key) => {
+        if (!obj.hasOwnProperty(key)) {
+          obj[key] = value;
+        }
+      })
+    });
+    return obj;
   };
 
 
@@ -275,6 +323,14 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
+      var results = {}
+
+    return function() {
+      if (!results[arguments[0]]) {
+        results[arguments[0]] = func.apply(this, arguments);
+      }
+      return results[arguments[0]];
+    }
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -284,6 +340,11 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    var args = _.map(arguments, item => item).slice(2);
+
+    setTimeout(function(){
+      func.apply(this, args);
+    }, wait);
   };
 
 
@@ -298,6 +359,20 @@
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+      var clonedArary = array.slice();
+    var shuffled = [];
+    var randomIndex;
+    var temp;
+    var last;
+
+    for (last = clonedArary.length - 1; last >= 0; last--) {
+      temp = clonedArary[last];
+      randomIndex = Math.floor(Math.random() * (last));
+      clonedArary[last] = clonedArary[randomIndex];
+      clonedArary[randomIndex] = temp;
+      shuffled.push(clonedArary.pop());
+    }
+    return shuffled;
   };
 
 
